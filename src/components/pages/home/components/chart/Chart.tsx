@@ -24,7 +24,15 @@ ChartJS.register(
   Legend
 );
 
-const INIT_CHART_DATA = {
+const INIT_CHART_DATA: {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: (number | null)[];
+    borderColor: string;
+    tension: number;
+  }[];
+} = {
   labels: [],
   datasets: [
     {
@@ -116,7 +124,7 @@ export const Chart = ({ initialData }: Props) => {
     console.log(prices, 'prices');
     setChartData({
       labels: prices?.map((p) => {
-        let date = new Date(p[0]);
+        let date = new Date(p[0] || 0);
         return date.toLocaleDateString();
       }),
       datasets: [
