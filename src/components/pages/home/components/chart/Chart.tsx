@@ -60,9 +60,25 @@ interface InvestmentResult {
   profitOrLoss: number;
 }
 
+// Constants
+const millisecondsPerSecond = 1000;
+const secondsPerMinute = 60;
+const minutesPerHour = 60;
+const hoursPerDay = 24;
+const daysPerYear = 365; // This does not account for leap years
+
+// Calculate milliseconds in two years
+const twoYearsInMilliseconds =
+  millisecondsPerSecond *
+  secondsPerMinute *
+  minutesPerHour *
+  hoursPerDay *
+  daysPerYear *
+  2;
+
 function calculateBitcoinInvestment(
-  startDate: string,
-  endDate: string,
+  startDate: string | number,
+  endDate: string | number,
   interval: 'daily' | 'weekly' | 'monthly',
   amount: number,
   prices: number[][]
@@ -95,7 +111,7 @@ function calculateBitcoinInvestment(
 
   const finalPriceData = prices.find(([date]) => date >= end);
   const finalPrice = finalPriceData ? finalPriceData[1] : 0;
-
+  console.log(finalPrice, 'finalPrice');
   const finalValue = totalBitcoin * finalPrice;
 
   return {
@@ -107,21 +123,8 @@ function calculateBitcoinInvestment(
 
 export const Chart = ({ initialData }: Props) => {
   const [chartData, setChartData] = useState(INIT_CHART_DATA);
-
-  const setFormattedData = (response: CoinGeckoResponse) => {
-    const prices = response.prices || [];
-
-    console.log(
-      calculateBitcoinInvestment(
-        '2021-11-09',
-        '2023-11-20',
-        'weekly',
-        100,
-        prices
-      ),
-      'calculateBitcoinInvestment'
-    );
-    console.log(prices, 'prices');
+  const prices = initialData.prices || [];
+  const setFormattedData = () => {
     setChartData({
       labels: prices?.map((p) => {
         let date = new Date(p[0] || 0);
@@ -139,7 +142,7 @@ export const Chart = ({ initialData }: Props) => {
   };
 
   useEffect(() => {
-    setFormattedData(initialData);
+    setFormattedData();
   }, [initialData]);
   // const fetchHistory = async () => {
   //   try {
@@ -153,11 +156,50 @@ export const Chart = ({ initialData }: Props) => {
   // useEffect(() => {
   //   fetchHistory();
   // }, []);
+  console.log(
+    prices[prices.length - 1][0].toLocaleString(),
+    'prices[prices.length - 1][0].toLocaleString()'
+  );
+  const result = calculateBitcoinInvestment(
+    initialData.prices[initialData.prices.length - 1][0] -
+      twoYearsInMilliseconds,
+    initialData.prices[initialData.prices.length - 1][0],
+    'weekly',
+    150,
+    prices
+  );
 
   return (
     <div>
       <h2>Bitcoin Price Chart</h2>
+      <div>
+        Last update:
+        {new Date(
+          initialData.prices[initialData.prices.length - 1][0]
+        ).toLocaleDateString()}
+      </div>
+      <div>
+        Last price: {initialData.prices[initialData.prices.length - 1][1]}
+      </div>
       <Line data={chartData} />
+
+      <div>
+        <div>
+          from:{' '}
+          {new Date(
+            initialData.prices[initialData.prices.length - 1][0] -
+              twoYearsInMilliseconds
+          ).toLocaleDateString()}{' '}
+          to{' '}
+          {new Date(
+            initialData.prices[initialData.prices.length - 1][0]
+          ).toLocaleDateString()}{' '}
+        </div>
+        <div>investment 150$ Weekly</div>
+        <div>Invested: {result.totalInvested?.toFixed(2)}</div>
+        <div>Rewards: {result.profitOrLoss?.toFixed(2)}</div>
+        <div>Final value: {result.finalValue?.toFixed(2)}</div>
+      </div>
     </div>
   );
 };
